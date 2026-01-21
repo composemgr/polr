@@ -1,0 +1,50 @@
+# nginx proxy address - http://172.17.0.1:8086
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "1"
+
+services:
+  polr:
+    image: ajanvier/polr:latest
+    container_name: polr-app
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - polr
+    ports:
+      - "8086:80"
+    environment:
+      TZ: ${TZ:-America/New_York}
+    volumes:
+      - ./rootfs/data/polr:/data
+      - ./rootfs/config/polr:/config
+    depends_on:
+      - polr-db
+
+  polr-db:
+    image: mariadb:11
+    container_name: polr-db
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - polr
+    environment:
+      TZ: ${TZ:-America/New_York}
+      MARIADB_DATABASE: ${DB_CREATE_DATABASE_NAME:-polr}
+      MARIADB_USER: ${DB_USER_NAME:-polr}
+      MARIADB_PASSWORD: ${DB_USER_PASS:-changeme_db_password}
+      MARIADB_ROOT_PASSWORD: ${DB_ADMIN_PASS:-changeme_root_password}
+    volumes:
+      - ./rootfs/db/mariadb/polr:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  polr:
+    external: false
