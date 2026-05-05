@@ -50,9 +50,9 @@ See `docker-compose.yaml` for complete list of configurable options.
 
 ## 📂 Volumes
 
-- `./rootfs/data/polr` - Data storage
-- `./rootfs/config/polr` - Data storage
-- `./rootfs/data/db/mariadb/polr` - Data storage
+- `./volumes/data/polr` - Data storage
+- `./volumes/config/polr` - Data storage
+- `./volumes/data/db/mariadb/polr` - Data storage
 
 ## 🔐 Security
 
