@@ -17,6 +17,8 @@ services:
     logging: *default-logging
     networks:
       - polr
+      - proxy
+      - cloudflare
     ports:
       - "172.17.0.1:8086:80"
     environment:
@@ -35,12 +37,30 @@ services:
       ADMIN_EMAIL: ${APP_ADMIN_EMAIL:-admin@example.com}
       SETTING_PUBLIC_INTERFACE: ${PUBLIC_INTERFACE:-false}
       POLR_ALLOW_ACCT_CREATION: ${ALLOW_REGISTRATION:-false}
+      CONTAINER_NAME: polr-app
+      HOSTNAME: ${BASE_HOST_NAME:-$HOSTNAME}
     volumes:
       - ./volumes/data/polr:/data
       - ./volumes/config/polr:/config
     depends_on:
       polr-db:
         condition: service_healthy
+    labels:
+      - 'traefik.enable=true'
+      - 'cloudflare.enable=true'
+      - 'traefik.docker.network=proxy'
+      - 'cloudflare.service=http://polr-app:80'
+      - 'cloudflare.hostname=polr.${CLOUDFLARE_ZONE_NAME:-}'
+      - 'traefik.http.routers.polr-app.entrypoints=http'
+      - 'traefik.http.routers.polr-app-secure.tls=true'
+      - 'traefik.http.routers.polr-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.middlewares.polr-app-https-redirect.redirectscheme.scheme=https'
+      - 'traefik.http.routers.polr-app.middlewares=polr-app-https-redirect'
+      - 'traefik.http.routers.polr-app-secure.entrypoints=https'
+      - 'traefik.http.routers.polr-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
+      - 'traefik.http.routers.polr-app-secure.tls.certresolver=cloudflare'
+      - 'traefik.http.routers.polr-app-secure.service=polr-app'
+      - 'traefik.http.services.polr-app.loadbalancer.server.port=80'
 
   polr-db:
     image: mariadb:latest
@@ -56,6 +76,7 @@ services:
       MARIADB_USER: ${DB_USER_NAME:-polr}
       MARIADB_PASSWORD: ${DB_USER_PASS:-changeme_db_password}
       MARIADB_ROOT_PASSWORD: ${DB_ADMIN_PASS:-changeme_admin_password}
+      CONTAINER_NAME: polr-db
     volumes:
       - ./volumes/data/db/mariadb/polr:/var/lib/mysql
     healthcheck:
@@ -68,3 +89,7 @@ networks:
   polr:
     name: polr
     external: false
+  proxy:
+    external: true
+  cloudflare:
+    external: true
