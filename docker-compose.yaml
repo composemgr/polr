@@ -1,5 +1,6 @@
 # nginx proxy address - http://172.17.0.1:8086
 
+name: polr
 x-logging: &default-logging
   driver: json-file
   options:
@@ -9,25 +10,43 @@ x-logging: &default-logging
 services:
   polr:
     image: ajanvier/polr:latest
+    pull_policy: always
     container_name: polr-app
-    restart: unless-stopped
+    hostname: ${BASE_HOST_NAME:-$HOSTNAME}
+    restart: always
     logging: *default-logging
     networks:
       - polr
     ports:
-      - "8086:80"
+      - "172.17.0.1:8086:80"
     environment:
       TZ: ${TZ:-America/New_York}
+      APP_NAME: ${APP_NAME:-Polr}
+      APP_ADDRESS: ${BASE_HOST_NAME:-localhost}.${BASE_DOMAIN_NAME:-example.com}
+      APP_PROTOCOL: ${APP_PROTOCOL:-https}
+      APP_KEY: ${APP_SECRET_KEY:-changeme_secret_key_min_32_chars}
+      DB_HOST: polr-db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_CREATE_DATABASE_NAME:-polr}
+      DB_USERNAME: ${DB_USER_NAME:-polr}
+      DB_PASSWORD: ${DB_USER_PASS:-changeme_db_password}
+      ADMIN_USERNAME: ${APP_ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${APP_ADMIN_PASS:-changeme_admin_password}
+      ADMIN_EMAIL: ${APP_ADMIN_EMAIL:-admin@example.com}
+      SETTING_PUBLIC_INTERFACE: ${PUBLIC_INTERFACE:-false}
+      POLR_ALLOW_ACCT_CREATION: ${ALLOW_REGISTRATION:-false}
     volumes:
       - ./volumes/data/polr:/data
       - ./volumes/config/polr:/config
     depends_on:
-      - polr-db
+      polr-db:
+        condition: service_healthy
 
   polr-db:
-    image: mariadb:11
+    image: mariadb:latest
+    pull_policy: always
     container_name: polr-db
-    restart: unless-stopped
+    restart: always
     logging: *default-logging
     networks:
       - polr
@@ -36,7 +55,7 @@ services:
       MARIADB_DATABASE: ${DB_CREATE_DATABASE_NAME:-polr}
       MARIADB_USER: ${DB_USER_NAME:-polr}
       MARIADB_PASSWORD: ${DB_USER_PASS:-changeme_db_password}
-      MARIADB_ROOT_PASSWORD: ${DB_ADMIN_PASS:-changeme_root_password}
+      MARIADB_ROOT_PASSWORD: ${DB_ADMIN_PASS:-changeme_admin_password}
     volumes:
       - ./volumes/data/db/mariadb/polr:/var/lib/mysql
     healthcheck:
@@ -47,4 +66,5 @@ services:
 
 networks:
   polr:
+    name: polr
     external: false
