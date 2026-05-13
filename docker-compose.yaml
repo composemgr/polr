@@ -23,7 +23,7 @@ services:
       - "172.17.0.1:8086:80"
     environment:
       TZ: ${TZ:-America/New_York}
-      APP_NAME: ${APP_NAME:-Polr}
+      APP_NAME: ${APP_ORG_NAME:-Polr}
       APP_ADDRESS: ${BASE_HOST_NAME:-localhost}.${BASE_DOMAIN_NAME:-example.com}
       APP_PROTOCOL: ${APP_PROTOCOL:-https}
       APP_KEY: ${APP_SECRET_KEY:-changeme_secret_key_min_32_chars}
@@ -34,7 +34,7 @@ services:
       DB_PASSWORD: ${DB_USER_PASS:-changeme_db_password}
       ADMIN_USERNAME: ${APP_ADMIN_USER:-admin}
       ADMIN_PASSWORD: ${APP_ADMIN_PASS:-changeme_admin_password}
-      ADMIN_EMAIL: ${APP_ADMIN_EMAIL:-admin@example.com}
+      ADMIN_EMAIL: ${APP_ADMIN_USER:-admin@example.com}
       SETTING_PUBLIC_INTERFACE: ${PUBLIC_INTERFACE:-false}
       POLR_ALLOW_ACCT_CREATION: ${ALLOW_REGISTRATION:-false}
       CONTAINER_NAME: polr-app
