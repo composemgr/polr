@@ -1,11 +1,11 @@
-# nginx proxy address - http://172.17.0.1:8086
+# nginx proxy address - http://172.17.0.1:64309
 
 name: polr
 x-logging: &default-logging
-  driver: json-file
   options:
-    max-size: "5m"
-    max-file: "1"
+    max-size: '5m'
+    max-file: '1'
+  driver: json-file
 
 services:
   polr:
@@ -15,12 +15,10 @@ services:
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     logging: *default-logging
+    ports:
+      - '172.17.0.1:64309:8080'
     networks:
       - polr
-      - proxy
-      - cloudflare
-    ports:
-      - "172.17.0.1:8086:80"
     environment:
       TZ: ${TZ:-America/New_York}
       APP_NAME: ${APP_ORG_NAME:-Polr}
@@ -45,22 +43,6 @@ services:
     depends_on:
       polr-db:
         condition: service_healthy
-    labels:
-      - 'traefik.enable=true'
-      - 'cloudflare.enable=true'
-      - 'traefik.docker.network=proxy'
-      - 'cloudflare.service=http://polr-app:80'
-      - 'cloudflare.hostname=polr.${CLOUDFLARE_ZONE_NAME:-}'
-      - 'traefik.http.routers.polr-app.entrypoints=http'
-      - 'traefik.http.routers.polr-app-secure.tls=true'
-      - 'traefik.http.routers.polr-app.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.middlewares.polr-app-https-redirect.redirectscheme.scheme=https'
-      - 'traefik.http.routers.polr-app.middlewares=polr-app-https-redirect'
-      - 'traefik.http.routers.polr-app-secure.entrypoints=https'
-      - 'traefik.http.routers.polr-app-secure.rule=Host($(${BASE_HOST_NAME:-$HOSTNAME}))'
-      - 'traefik.http.routers.polr-app-secure.tls.certresolver=cloudflare'
-      - 'traefik.http.routers.polr-app-secure.service=polr-app'
-      - 'traefik.http.services.polr-app.loadbalancer.server.port=80'
 
   polr-db:
     image: mariadb:latest
@@ -89,7 +71,3 @@ networks:
   polr:
     name: polr
     external: false
-  proxy:
-    external: true
-  cloudflare:
-    external: true
