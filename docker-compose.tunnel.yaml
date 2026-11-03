@@ -13,6 +13,12 @@ services:
     hostname: ${BASE_HOST_NAME:-$HOSTNAME}
     restart: always
     logging: *default-logging
+    healthcheck:
+      test: ['CMD-SHELL', 'curl --silent --fail http://127.0.0.1:8080/fpm-ping']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     labels:
       - 'cloudflare.enable=true'
       - 'cloudflare.service=http://polr-app:8080'
